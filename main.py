@@ -10,14 +10,14 @@ from utils.pdf_parser import extract_text_from_pdf
 from utils.email_parser import parse_email
 
 load_dotenv()
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+HF_TOKEN = os.getenv('HF_TOKEN')
 
 def process_input(input_path):
     logger = setup_logger()
     shared_memory = SharedMemory()
-    classifier = ClassifierAgent(OPENAI_API_KEY)
-    json_agent = JSONAgent()
-    email_agent = EmailAgent()
+    classifier = ClassifierAgent(HF_TOKEN)
+    json_agent = JSONAgent(HF_TOKEN)
+    email_agent = EmailAgent(HF_TOKEN)
 
     # Load input
     if input_path.endswith('.pdf'):
