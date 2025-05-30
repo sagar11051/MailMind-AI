@@ -1,0 +1,10 @@
+From: alice@example.com
+To: support@flowbit.com
+Subject: Request for Quotation
+
+Hello,
+
+I would like to request a quotation for your enterprise plan.
+
+Best regards,
+Alice 

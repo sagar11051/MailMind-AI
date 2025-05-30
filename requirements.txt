@@ -1,0 +1,7 @@
+transformers
+huggingface_hub
+requests
+pdfplumber
+python-dotenv
+fastapi
+uvicorn 
