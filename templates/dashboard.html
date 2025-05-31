@@ -1,0 +1,681 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Agent Dashboard</h1>
+        <p class="text-gray-600">Manage and interact with your AI agents</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Requests</p>
+                    <p class="text-2xl font-semibold text-gray-800" id="totalRequests">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Successful</p>
+                    <p class="text-2xl font-semibold text-gray-800" id="successfulRequests">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Pending</p>
+                    <p class="text-2xl font-semibold text-gray-800" id="pendingRequests">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column - Input Forms -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- File Upload Card -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                    <h2 class="text-xl font-semibold text-white">Upload File</h2>
+                </div>
+                <div class="p-6">
+                    <form id="fileUploadForm" class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-600">Drag and drop your file here, or click to browse</p>
+                            <input type="file" id="fileInput" class="hidden" accept=".pdf,.json,.txt">
+                            <button type="button" onclick="document.getElementById('fileInput').click()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Select File
+                            </button>
+                            <p id="fileName" class="mt-2 text-xs text-gray-500">No file selected</p>
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Process File
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- JSON Input Card -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Process JSON</h2>
+                <form id="jsonForm" class="space-y-4">
+                    <div>
+                        <textarea id="jsonInput" class="w-full p-2 border rounded h-32" placeholder="Paste your JSON here..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition">
+                        Process JSON
+                    </button>
+                </form>
+            </div>
+
+            <!-- Email Input Card -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Process Email</h2>
+                <form id="emailForm" class="space-y-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="emailSubject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                            <input type="text" id="emailSubject" class="w-full p-2 border rounded" placeholder="Email subject">
+                        </div>
+                        <div>
+                            <label for="emailBody" class="block text-sm font-medium text-gray-700 mb-1">Email Body</label>
+                            <textarea id="emailBody" class="w-full p-2 border rounded h-32" placeholder="Paste email content here..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition">
+                            Process Email
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Right Column - Results -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Results Card -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4">
+                    <h2 class="text-xl font-semibold text-white">Processing Results</h2>
+                </div>
+                <div class="p-6">
+                    <div id="processingStatus" class="hidden mb-4 p-4 bg-yellow-100 text-yellow-800 rounded">
+                        Processing your request...
+                    </div>
+                    <div id="resultsContent" class="min-h-64 bg-gray-50 rounded p-4">
+                        <div class="text-center text-gray-500 py-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p>Submit a file, JSON, or email to see the processing results here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activities -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-600 to-gray-700 px-6 py-4">
+                    <h2 class="text-xl font-semibold text-white">Recent Activities</h2>
+                </div>
+                <div class="p-6">
+                    <div id="recentActivities" class="space-y-4">
+                        <div class="text-center text-gray-500 py-4">
+                            <p>No recent activities to display.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show loading state
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+    document.getElementById('processingStatus').classList.remove('hidden');
+    document.getElementById('resultsContent').innerHTML = `
+        <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+    `;
+}
+
+// Hide loading state
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('processingStatus').classList.add('hidden');
+}
+
+// Show success message
+function showSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'mb-4 p-4 bg-green-100 text-green-800 rounded';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            ${message}
+        </div>
+    `;
+    return alert;
+}
+
+// Show error message
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'mb-4 p-4 bg-red-100 text-red-800 rounded';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            ${message}
+        </div>
+    `;
+    return alert;
+}
+
+// Format JSON for display
+function formatJSON(json) {
+    if (typeof json === 'string') {
+        try {
+            json = JSON.parse(json);
+        } catch (e) {
+            return json; // Return as is if not valid JSON
+        }
+    }
+    return JSON.stringify(json, null, 2);
+}
+
+// Handle file upload
+const fileForm = document.getElementById('fileUploadForm');
+const fileInput = document.getElementById('fileInput');
+
+// Update file name display
+fileInput.addEventListener('change', (e) => {
+    const fileName = document.getElementById('fileName');
+    if (fileInput.files.length > 0) {
+        fileName.textContent = fileInput.files[0].name;
+    } else {
+        fileName.textContent = 'No file selected';
+    }
+});
+
+fileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        const alert = showError('Please select a file first');
+        document.getElementById('resultsContent').prepend(alert);
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        showLoading();
+        const response = await fetch('/process-file/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Display results
+            const resultsDiv = document.getElementById('resultsContent');
+            resultsDiv.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">File Processed Successfully</h3>
+                    <p class="text-gray-700 mb-2">File: <span class="font-mono">${file.name}</span></p>
+                    <p class="text-gray-700 mb-4">Type: <span class="font-mono">${file.type || 'Unknown'}</span></p>
+                    <div class="bg-gray-100 p-4 rounded overflow-auto max-h-96">
+                        <pre class="text-sm">${formatJSON(result)}</pre>
+                    </div>
+                </div>
+            `;
+            
+            // Add to recent activities
+            addRecentActivity(`Processed file: ${file.name}`, result);
+            updateStats();
+        } else {
+            throw new Error(result.detail || 'Failed to process file');
+        }
+    } catch (error) {
+        console.error('Error processing file:', error);
+        const alert = showError(`Error: ${error.message}`);
+        document.getElementById('resultsContent').prepend(alert);
+    } finally {
+        hideLoading();
+    }
+});
+
+// Handle JSON form submission
+const jsonForm = document.getElementById('jsonForm');
+jsonForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const jsonInput = document.getElementById('jsonInput');
+    const jsonString = jsonInput.value.trim();
+    
+    if (!jsonString) {
+        const alert = showError('Please enter some JSON data');
+        document.getElementById('resultsContent').prepend(alert);
+        return;
+    }
+    
+    let jsonData;
+    try {
+        jsonData = JSON.parse(jsonString);
+    } catch (e) {
+        const alert = showError('Invalid JSON. Please check your input.');
+        document.getElementById('resultsContent').prepend(alert);
+        return;
+    }
+    
+    try {
+        showLoading();
+        const response = await fetch('/process-json/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Display results
+            const resultsDiv = document.getElementById('resultsContent');
+            resultsDiv.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">JSON Processed Successfully</h3>
+                    <div class="bg-gray-100 p-4 rounded overflow-auto max-h-96">
+                        <pre class="text-sm">${formatJSON(result)}</pre>
+                    </div>
+                </div>
+            `;
+            
+            // Add to recent activities
+            addRecentActivity('Processed JSON data', result);
+            updateStats();
+            
+            // Clear the form
+            jsonInput.value = '';
+        } else {
+            throw new Error(result.detail || 'Failed to process JSON');
+        }
+    } catch (error) {
+        console.error('Error processing JSON:', error);
+        const alert = showError(`Error: ${error.message}`);
+        document.getElementById('resultsContent').prepend(alert);
+    } finally {
+        hideLoading();
+    }
+});
+
+// Handle email form submission
+const emailForm = document.getElementById('emailForm');
+emailForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const emailSubject = document.getElementById('emailSubject').value.trim();
+    const emailBody = document.getElementById('emailBody').value.trim();
+    
+    if (!emailBody) {
+        const alert = showError('Please enter email content');
+        document.getElementById('resultsContent').prepend(alert);
+        return;
+    }
+    
+    const emailData = {
+        subject: emailSubject,
+        body: emailBody
+    };
+    
+    try {
+        showLoading();
+        const response = await fetch('/process-email/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                subject: emailSubject,
+                body: emailBody
+            })
+        });
+        
+        const responseData = await response.json();
+        
+        if (response.ok) {
+            const result = responseData.data || {};
+            
+            // Update recent activities
+            const recentActivities = document.getElementById('recentActivities');
+            if (recentActivities) {
+                const activityItem = document.createElement('div');
+                activityItem.className = 'p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-3 border border-gray-100';
+                
+                // Get urgency color
+                const urgency = result.metadata?.urgency || 'Normal';
+                const urgencyColors = {
+                    'High': 'bg-red-100 text-red-800',
+                    'Medium': 'bg-yellow-100 text-yellow-800',
+                    'Low': 'bg-green-100 text-green-800'
+                };
+                const urgencyClass = urgencyColors[urgency] || 'bg-gray-100 text-gray-800';
+                
+                // Get intent
+                const intent = result.metadata?.intent || 'Email';
+                
+                // Format timestamp
+                const timestamp = result.metadata?.received_at ? 
+                    new Date(result.metadata.received_at).toLocaleString() : 
+                    new Date().toLocaleString();
+                
+                activityItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 text-xs rounded-full ${urgencyClass} font-medium">
+                                    ${urgency} Priority
+                                </span>
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-medium">
+                                    ${intent}
+                                </span>
+                            </div>
+                            <h4 class="mt-1 text-sm font-medium text-gray-900 truncate">
+                                ${result.metadata?.subject || 'Email Processed'}
+                            </h4>
+                            <p class="mt-1 text-xs text-gray-500">
+                                From: ${result.metadata?.sender_name || result.metadata?.sender_email || 'Unknown Sender'}
+                            </p>
+                            ${result.content?.response ? `
+                                <div class="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-400">
+                                    <p class="font-medium text-gray-700">Suggested Response:</p>
+                                    <p class="mt-1 line-clamp-2">${result.content.response}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <span class="text-xs text-gray-500">${timestamp}</span>
+                        </div>
+                    </div>
+                    ${result.content?.suggested_actions?.length > 0 ? `
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            ${result.content.suggested_actions.map(action => `
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    ${action}
+                                </span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
+                
+                // Add click handler to show full details
+                activityItem.addEventListener('click', () => {
+                    document.getElementById('resultsContent').innerHTML = `
+                        <div class="space-y-4">
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-xl font-semibold text-gray-900">${result.metadata?.subject || 'Email Details'}</h3>
+                                        <p class="text-sm text-gray-500">
+                                            From: ${result.metadata?.sender_name || result.metadata?.sender_email || 'Unknown Sender'}
+                                        </p>
+                                    </div>
+                                    <span class="px-3 py-1 ${urgencyClass} text-xs font-medium rounded-full">
+                                        ${intent}
+                                    </span>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h4 class="font-medium text-gray-900 mb-2">Email Content:</h4>
+                                    <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                                        <pre class="text-sm whitespace-pre-wrap font-sans">${result.content?.body || 'No content available'}</pre>
+                                    </div>
+                                </div>
+                                
+                                ${result.content?.response ? `
+                                    <div class="mt-4">
+                                        <h4 class="font-medium text-gray-900 mb-2">Suggested Response:</h4>
+                                        <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                                            <pre class="text-sm whitespace-pre-wrap font-sans">${result.content.response}</pre>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                ${result.content?.suggested_actions?.length > 0 ? `
+                                    <div class="mt-4">
+                                        <h4 class="font-medium text-gray-900 mb-2">Suggested Actions:</h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${result.content.suggested_actions.map(action => `
+                                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                                                    ${action}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="bg-white shadow rounded-lg p-6">
+                                <h4 class="font-semibold mb-2">Processing Details:</h4>
+                                <div class="bg-gray-50 p-4 rounded overflow-auto max-h-64">
+                                    <pre class="text-xs">${formatJSON(result)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Scroll to results
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                });
+                
+                recentActivities.insertBefore(activityItem, recentActivities.firstChild);
+                
+                // Keep only the last 10 activities
+                while (recentActivities.children.length > 10) {
+                    recentActivities.removeChild(recentActivities.lastChild);
+                }
+            }
+            
+            // Display results
+            const resultsDiv = document.getElementById('resultsContent');
+            resultsDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900">${result.metadata?.subject || 'Email Processed'}</h3>
+                                <p class="text-sm text-gray-500">From: ${result.metadata?.sender_name || result.metadata?.sender_email || 'Unknown Sender'}</p>
+                            </div>
+                            <span class="px-3 py-1 ${urgencyClass} text-xs font-medium rounded-full">
+                                ${intent}
+                            </span>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Email Content:</h4>
+                            <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                                <pre class="text-sm whitespace-pre-wrap font-sans">${emailBody}</pre>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Suggested Response:</h4>
+                            <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                                <pre class="text-sm whitespace-pre-wrap font-sans">${content.response || 'No response generated.'}</pre>
+                            </div>
+                        </div>
+                        
+                        ${actionsHtml}
+                    </div>
+                    
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h4 class="font-semibold mb-2">Processing Details:</h4>
+                        <div class="bg-gray-50 p-4 rounded overflow-auto max-h-64">
+                            <pre class="text-xs">${formatJSON(result)}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to recent activities
+            addRecentActivity(
+                `Email: ${emailSubject || 'No Subject'}`,
+                { content: emailBody.length > 100 ? emailBody.substring(0, 100) + '...' : emailBody, result: result }
+            );
+            updateStats();
+            
+            // Clear the form
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+        } else {
+            throw new Error(responseData.detail || 'Failed to process email');
+        }
+    } catch (error) {
+        console.error('Error processing email:', error);
+        const alert = showError(`Error: ${error.message}`);
+        document.getElementById('resultsContent').prepend(alert);
+    } finally {
+        hideLoading();
+    }
+});
+
+/**
+ * Add activity to recent activities
+ */
+function addRecentActivity(title, data) {
+    const activitiesDiv = document.getElementById('recentActivities');
+    
+    // Remove the "no activities" message if it exists
+    if (activitiesDiv.querySelector('.text-center')) {
+        activitiesDiv.innerHTML = '';
+    }
+    
+    const activityItem = document.createElement('div');
+    activityItem.className = 'p-3 bg-gray-50 rounded border border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors';
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateString = now.toLocaleDateString();
+    
+    // Truncate title if too long
+    const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+    
+    activityItem.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h4 class="font-medium text-gray-900">${truncatedTitle}</h4>
+                <p class="text-sm text-gray-500 truncate">${JSON.stringify(data).substring(0, 80)}${JSON.stringify(data).length > 80 ? '...' : ''}</p>
+            </div>
+            <span class="text-xs text-gray-500 ml-2 whitespace-nowrap">${timeString}</span>
+        </div>
+        <div class="mt-1 text-xs text-gray-400">${dateString}</div>
+    `;
+    
+    // Add click to view details
+    activityItem.addEventListener('click', () => {
+        const resultsDiv = document.getElementById('resultsContent');
+        resultsDiv.innerHTML = `
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">${title}</h3>
+                <p class="text-sm text-gray-500 mb-2">Processed on ${dateString} at ${timeString}</p>
+                <div class="bg-gray-100 p-4 rounded overflow-auto max-h-96">
+                    <pre class="text-sm">${formatJSON(data)}</pre>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Add to the top of the list
+    activitiesDiv.insertBefore(activityItem, activitiesDiv.firstChild);
+    
+    // Limit to 10 activities
+    while (activitiesDiv.children.length > 10) {
+        activitiesDiv.removeChild(activitiesDiv.lastChild);
+    }
+    
+    // Update stats
+    updateStats();
+}
+
+// Update stats
+function updateStats() {
+    const activities = document.querySelectorAll('#recentActivities > div');
+    
+    // Only update if we have activities
+    if (activities.length > 0) {
+        document.getElementById('totalRequests').textContent = activities.length;
+        
+        // In a real app, you would get these from the server
+        const successCount = Math.floor(activities.length * 0.9); // 90% success rate for demo
+        document.getElementById('successfulRequests').textContent = successCount;
+        document.getElementById('pendingRequests').textContent = activities.length - successCount;
+    }
+}
+
+// Load recent activities on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // In a real app, you would load activities from the server
+    // For now, we'll just show a message
+    const activitiesDiv = document.getElementById('recentActivities');
+    if (activitiesDiv && activitiesDiv.children.length === 0) {
+        activitiesDiv.innerHTML = `
+            <div class="text-center text-gray-500 py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>No recent activities to display.</p>
+            </div>
+        `;
+    }
+    
+    // Initialize file input display
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    
+    if (fileInput && fileName) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileName.textContent = 'No file selected';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold mb-6">Memory Logs</h1>
+    
+    <div class="mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Recent Memory Entries</h2>
+            <button id="refreshMemory" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                Refresh
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border-b border-gray-200 text-left">Timestamp</th>
+                        <th class="py-2 px-4 border-b border-gray-200 text-left">Source</th>
+                        <th class="py-2 px-4 border-b border-gray-200 text-left">Type</th>
+                        <th class="py-2 px-4 border-b border-gray-200 text-left">Key</th>
+                        <th class="py-2 px-4 border-b border-gray-200 text-left">Value</th>
+                    </tr>
+                </thead>
+                <tbody id="memoryEntries">
+                    <!-- Memory entries will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="5" class="py-4 text-center text-gray-500">Loading memory entries...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold mb-4">Search Memory</h2>
+        <div class="flex space-x-4">
+            <input type="text" id="searchQuery" placeholder="Search by key or value..." 
+                   class="flex-grow p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="searchButton" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+                Search
+            </button>
+        </div>
+        <div id="searchResults" class="mt-4">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Load memory entries when page loads
+    loadMemoryEntries();
+    
+    // Set up refresh button
+    document.getElementById('refreshMemory').addEventListener('click', loadMemoryEntries);
+    
+    // Set up search functionality
+    const searchButton = document.getElementById('searchButton');
+    const searchInput = document.getElementById('searchQuery');
+    
+    searchButton.addEventListener('click', searchMemory);
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            searchMemory();
+        }
+    });
+});
+
+// Load memory entries from the server
+async function loadMemoryEntries() {
+    const entriesBody = document.getElementById('memoryEntries');
+    entriesBody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">Loading memory entries...</td></tr>';
+    
+    try {
+        // In a real app, you would fetch this from your API
+        // For now, we'll simulate a response
+        const response = await fetch('/api/memory/entries');
+        const data = await response.json();
+        
+        if (data.length === 0) {
+            entriesBody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">No memory entries found.</td></tr>';
+            return;
+        }
+        
+        // Clear loading message
+        entriesBody.innerHTML = '';
+        
+        // Add entries to the table
+        data.forEach(entry => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 border-b border-gray-200';
+            
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            const valuePreview = typeof entry.value === 'string' 
+                ? entry.value.length > 50 
+                    ? entry.value.substring(0, 50) + '...' 
+                    : entry.value
+                : JSON.stringify(entry.value);
+            
+            row.innerHTML = `
+                <td class="py-2 px-4">${timestamp}</td>
+                <td class="py-2 px-4">${entry.source || 'N/A'}</td>
+                <td class="py-2 px-4">${entry.type || 'N/A'}</td>
+                <td class="py-2 px-4 font-mono text-sm">${entry.key}</td>
+                <td class="py-2 px-4">${valuePreview}</td>
+            `;
+            
+            // Show full value on click
+            row.addEventListener('click', () => {
+                const displayValue = typeof entry.value === 'string' 
+                    ? entry.value 
+                    : JSON.stringify(entry.value, null, 2);
+                
+                alert(`Key: ${entry.key}\nValue: ${displayValue}`);
+            });
+            
+            entriesBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error loading memory entries:', error);
+        entriesBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="py-4 text-center text-red-500">
+                    Error loading memory entries. Please try again.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Search memory entries
+async function searchMemory() {
+    const query = document.getElementById('searchQuery').value.trim();
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (!query) {
+        resultsDiv.innerHTML = '<p class="text-yellow-600">Please enter a search term.</p>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = '<p class="text-gray-500">Searching...</p>';
+    
+    try {
+        // In a real app, you would send this to your API
+        // For now, we'll simulate a response
+        const response = await fetch(`/api/memory/search?q=${encodeURIComponent(query)}`);
+        const results = await response.json();
+        
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<p class="text-gray-500">No matching entries found.</p>';
+            return;
+        }
+        
+        let html = '<div class="space-y-4">';
+        
+        results.forEach(entry => {
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            const displayValue = typeof entry.value === 'string' 
+                ? entry.value 
+                : JSON.stringify(entry.value, null, 2);
+            
+            html += `
+                <div class="border border-gray-200 rounded p-4 hover:bg-gray-50">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold">${entry.key}</h3>
+                            <p class="text-sm text-gray-500">${entry.source || 'N/A'} • ${entry.type || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">${timestamp}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-40">
+                        <pre class="text-sm">${displayValue}</pre>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        resultsDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error searching memory:', error);
+        resultsDiv.innerHTML = `
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                Error searching memory: ${error.message}
+            </div>
+        `;
+    }
+}
+</script>
+{% endblock %}

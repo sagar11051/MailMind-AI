@@ -1,1 +1,51 @@
- 
+ 2025-05-31 07:13:29,773 ERROR Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-05-31 07:13:47,575 ERROR Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-05-31 09:45:40,172 INFO Classification result: {'format': None, 'intent': None, 'route_to': None, 'error': '404 Client Error: Not Found for url: https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2'}
+2025-05-31 09:45:40,172 INFO Agent output: {'error': 'No valid route'}
+2025-05-31 09:46:10,904 INFO Classification result: {'format': None, 'intent': None, 'route_to': None, 'error': '404 Client Error: Not Found for url: https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english'}
+2025-05-31 09:46:10,904 INFO Agent output: {'error': 'No valid route'}
+2025-05-31 09:48:12,371 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 09:48:13,249 INFO Agent output: {'reformatted': {}, 'anomalies': ['404 Client Error: Not Found for url: https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2']}
+2025-05-31 10:20:47,025 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 10:20:47,488 INFO Agent output: {'reformatted': {}, 'anomalies': ['404 Client Error: Not Found for url: https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2']}
+2025-05-31 10:24:48,630 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 10:24:48,631 INFO Agent output: {'sender': 'test@example.com', 'intent': 'General Inquiry', 'urgency': 'Low', 'body': 'Hello, this is a test email. Please process this request.\n\nBest regards,\nTest User\nemail: test@example.com'}
+2025-05-31 10:53:42,571 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 10:53:42,571 INFO Agent output: {'sender': 'unknown@example.com', 'intent': 'Scheduling', 'urgency': 'Low', 'body': 'Hi Team,\n\nI hope this email finds you well. I would like to schedule a meeting to discuss the progress of our current project.\n\n**Agenda:**'}
+2025-05-31 10:54:19,432 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 10:54:19,435 INFO Agent output: {'sender': None, 'intent': None, 'urgency': None, 'body': None, 'error': "expected string or bytes-like object, got 'dict'"}
+2025-05-31 10:57:58,303 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 10:57:58,303 INFO Agent output: {'reformatted': {}, 'anomalies': ['Invalid JSON format']}
+2025-05-31 10:59:04,084 INFO Classification result: {'format': 'Text', 'intent': 'General Processing', 'route_to': 'json_agent'}
+2025-05-31 10:59:04,084 INFO Agent output: {'reformatted': {'customer': {'name': 'Delta Corp', 'email': 'billing@deltacorp.com'}, 'request_type': 'general', 'details': {'invoice_id': 'INV-98234', 'date': '2025-05-20', 'items': [{'description': 'Server Maintenance', 'amount': 1500}, {'description': 'Cloud Hosting', 'amount': 3500}], 'total': 5000, 'currency': 'USD'}}, 'anomalies': []}
+2025-05-31 11:00:34,033 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 11:00:34,033 INFO Agent output: {'reformatted': {'customer': {'name': 'Delta Corp', 'email': 'billing@deltacorp.com'}, 'request_type': 'general', 'details': {'invoice_id': 'INV-98234', 'date': '2025-05-20', 'items': [{'description': 'Server Maintenance', 'amount': 1500}, {'description': 'Cloud Hosting', 'amount': 3500}], 'total': 5000, 'currency': 'USD'}}, 'anomalies': []}
+2025-05-31 11:01:42,866 INFO Classification result: {'format': 'Text', 'intent': 'General Processing', 'route_to': 'json_agent'}
+2025-05-31 11:01:42,867 INFO Agent output: {'reformatted': {}, 'anomalies': ['Invalid JSON format']}
+2025-05-31 11:02:25,171 INFO Classification result: {'format': 'Text', 'intent': 'General Processing', 'route_to': 'json_agent'}
+2025-05-31 11:02:25,171 INFO Agent output: {'reformatted': {}, 'anomalies': ['Invalid JSON format']}
+2025-05-31 11:08:05,014 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 11:09:58,910 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 11:09:58,910 INFO Agent output: {'reformatted': {}, 'anomalies': ['Invalid JSON format']}
+2025-05-31 11:10:36,784 INFO Classification result: {'format': 'JSON', 'intent': 'Data Processing', 'route_to': 'json_agent'}
+2025-05-31 11:10:36,784 INFO Agent output: {'reformatted': {}, 'anomalies': ['Invalid JSON format']}
+2025-05-31 11:11:38,093 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 11:11:38,093 INFO Agent output: {'metadata': {'sender_email': 'hannah@hcconsulting.com', 'sender_name': '', 'subject': 'Invoice Submission - April Services', 'intent': 'Invoice/Payment', 'urgency': 'Low', 'received_at': '2025-05-31T11:11:38.093598'}, 'content': {'body': 'Dear Accounts,\n\nPlease find attached the invoice for the services rendered in April 2025. Let me know if you require any further documents.\n\nInvoice #: INVOICE-2045  ', 'response': "Hello there,\n\nThank you for your message. We've received your inquiry and will get back to you with more information soon.\n\nBest regards,\nThe AI Solutions Team", 'suggested_actions': ['Review manually']}}
+2025-05-31 11:12:43,737 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 11:12:43,737 INFO Agent output: {'metadata': {'sender_email': 'leo.zhang@bluepixel.com', 'sender_name': '', 'subject': 'Weekly Update - Project Nimbus', 'intent': 'Meeting Request', 'urgency': 'Low', 'received_at': '2025-05-31T11:12:43.737635'}, 'content': {'body': 'Hi Team,\n\nHere’s the weekly update for Project Nimbus. We’re 80% complete on the backend integration. Frontend UAT is scheduled for next Monday.\n\nNo blockers at this time. Let me know if you need anything specific for reporting.', 'response': "Hi there,\n\nWe'd be happy to schedule a call to discuss {subject or 'this matter'}. Please let us know your availability for the next few days.\n\nBest regards,\nThe AI Solutions Team", 'suggested_actions': ['Check calendar', 'Propose times', 'Assign to team member']}}
+2025-05-31 11:13:41,771 INFO Classification result: {'format': 'Text', 'intent': 'General Processing', 'route_to': 'json_agent'}
+2025-05-31 11:13:41,771 INFO Agent output: {'reformatted': {'customer': {'name': 'Orion Tech', 'email': 'finance@oriontech.com'}, 'request_type': 'general', 'details': {'document_type': 'invoice', 'invoice_id': 'INV-30045', 'date': '2025-05-27', 'items': [{'description': 'Software License - Annual Plan', 'quantity': 1, 'amount': 12000}, {'description': 'Setup & Onboarding', 'quantity': 1, 'amount': 1000}], 'currency': 'USD', 'total': 13000}}, 'anomalies': []}
+2025-05-31 11:14:58,404 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 11:14:58,404 INFO Agent output: {'metadata': {'sender_email': 'emily.tran@zenbuzz.co', 'sender_name': '', 'subject': 'Login Failure - Support Request', 'intent': 'General Inquiry', 'urgency': 'Low', 'received_at': '2025-05-31T11:14:58.404029'}, 'content': {'body': 'Hello,\n\nI’m unable to log into the admin dashboard with my credentials. I’ve tried resetting the password twice but still can’t get access.\n\nPlease assist when available.', 'response': "Hello there,\n\nThank you for your message. We've received your inquiry and will get back to you with more information soon.\n\nBest regards,\nThe AI Solutions Team", 'suggested_actions': ['Review manually']}}
+2025-05-31 11:15:55,542 INFO Classification result: {'format': 'Text', 'intent': 'General Processing', 'route_to': 'json_agent'}
+2025-05-31 11:15:55,546 INFO Agent output: {'reformatted': {'customer': {'name': 'Orion Tech', 'email': 'finance@oriontech.com'}, 'request_type': 'general', 'details': {'document_type': 'invoice', 'invoice_id': 'INV-30045', 'date': '2025-05-27', 'items': [{'description': 'Software License - Annual Plan', 'quantity': 1, 'amount': 12000}, {'description': 'Setup & Onboarding', 'quantity': 1, 'amount': 1000}], 'currency': 'USD', 'total': 13000}}, 'anomalies': []}
+2025-05-31 11:16:35,835 INFO Classification result: {'format': 'Email', 'intent': 'Communication', 'route_to': 'email_agent'}
+2025-05-31 11:16:35,835 INFO Agent output: {'metadata': {'sender_email': 'leo.zhang@bluepixel.com', 'sender_name': '', 'subject': 'Weekly Update - Project Nimbus', 'intent': 'Meeting Request', 'urgency': 'Low', 'received_at': '2025-05-31T11:16:35.835927'}, 'content': {'body': 'Hi Team,\n\nHere’s the weekly update for Project Nimbus. We’re 80% complete on the backend integration. Frontend UAT is scheduled for next Monday.\n\nNo blockers at this time. Let me know if you need anything specific for reporting.', 'response': "Hi there,\n\nWe'd be happy to schedule a call to discuss {subject or 'this matter'}. Please let us know your availability for the next few days.\n\nBest regards,\nThe AI Solutions Team", 'suggested_actions': ['Check calendar', 'Propose times', 'Assign to team member']}}
