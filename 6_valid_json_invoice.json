@@ -1,0 +1,17 @@
+{
+  "customer": {
+    "name": "Delta Corp",
+    "email": "billing@deltacorp.com"
+  },
+  "request_type": "general",
+  "details": {
+    "invoice_id": "INV-98234",
+    "date": "2025-05-20",
+    "items": [
+      { "description": "Server Maintenance", "amount": 1500 },
+      { "description": "Cloud Hosting", "amount": 3500 }
+    ],
+    "total": 5000,
+    "currency": "USD"
+  }
+}

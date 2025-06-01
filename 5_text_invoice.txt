@@ -1,0 +1,10 @@
+Customer: Orion Tech
+Email: finance@oriontech.com
+Document Type: Invoice
+Invoice ID: INV-30045
+Date: 2025-05-27
+Items:
+- Software License - Annual Plan: $12000
+- Setup & Onboarding: $1000
+Total: $13000
+Currency: USD
