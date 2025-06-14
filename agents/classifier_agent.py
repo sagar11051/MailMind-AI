@@ -1,113 +1,128 @@
-import json
+from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.tools import Tool
+from langchain_community.llms import Ollama
+from langchain.memory import ConversationBufferMemory
 from typing import Dict, Any
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-import torch
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class ClassifierAgent:
-    def __init__(self, hf_token: str):
-        self.hf_token = hf_token
-        self.device = "cpu"  # Force CPU to avoid CUDA memory issues
-        # Use a much smaller model
-        self.model_name = "google/electra-small-discriminator"
-        self.tokenizer = None
-        self.model = None
-        try:
-            self._load_model()
-        except Exception as e:
-            print(f"Warning: Could not load model: {e}")
-            self.model = None
-    
-    def _load_model(self):
-        """Load the model and tokenizer"""
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                self.model_name,
-                num_labels=3,  # JSON, Email, Text
-                id2label={0: "JSON", 1: "Email", 2: "Text"},
-                label2id={"JSON": 0, "Email": 1, "Text": 2}
-            ).to(self.device)
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            self.model = None
+    def __init__(self, hf_token: str = None):
+        self.llm = Ollama(
+            model="llama2",
+            temperature=0,
+            base_url="http://localhost:11434"
+        )
+        
+        # Define tools for the agent
+        self.tools = [
+            Tool(
+                name="classify_content",
+                func=self._classify_content,
+                description="Classifies the content type and determines the appropriate route"
+            ),
+            Tool(
+                name="extract_metadata",
+                func=self._extract_metadata,
+                description="Extracts relevant metadata from the content"
+            )
+        ]
+        
+        # Create the prompt template
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an expert content classifier and router. Your task is to:
+            1. Analyze the input content
+            2. Determine its type (email, JSON, text, etc.)
+            3. Extract relevant metadata
+            4. Route it to the appropriate processing agent
+            
+            Available routes:
+            - json_agent: For structured JSON data
+            - email_agent: For email content
+            - text_agent: For plain text content
+            
+            Provide detailed reasoning for your classification."""),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
+        
+        # Initialize memory
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+        
+        # Create the agent
+        self.agent = create_openai_functions_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=self.prompt
+        )
+        
+        # Create the agent executor
+        self.agent_executor = AgentExecutor(
+            agent=self.agent,
+            tools=self.tools,
+            memory=self.memory,
+            verbose=True
+        )
 
-    def classify_and_route(self, input_data) -> Dict[str, Any]:
+    def _classify_content(self, content: str) -> Dict[str, Any]:
+        """Helper function to classify content type"""
+        if isinstance(content, dict):
+            return {"type": "json", "confidence": 0.95}
+        elif "@" in content and ("Subject:" in content or "From:" in content):
+            return {"type": "email", "confidence": 0.95}
+        else:
+            return {"type": "text", "confidence": 0.95}
+
+    def _extract_metadata(self, content: str) -> Dict[str, Any]:
+        """Helper function to extract metadata"""
+        metadata = {
+            "content_length": len(str(content)),
+            "has_attachments": False,
+            "is_structured": isinstance(content, dict)
+        }
+        return metadata
+
+    def classify_and_route(self, input_data: Any) -> Dict[str, Any]:
         """
-        Classify the input data and determine the appropriate route.
-        
-        Args:
-            input_data: The input data to classify
-            
-        Returns:
-            Dict containing classification results
+        Classifies the input data and determines the appropriate route
         """
-        # Simple heuristic fallback if model loading failed
-        if self.model is None:
-            return self._fallback_classification(input_data)
-        
         try:
-            # Convert input to string if it's a dictionary
+            # Prepare the input for the agent
+            agent_input = {
+                "input": f"Please analyze and classify this content: {str(input_data)}"
+            }
+            
+            # Run the agent
+            result = self.agent_executor.invoke(agent_input)
+            
+            # Process the agent's response
+            classification = result.get("output", {})
+            
+            # Determine the route based on classification
             if isinstance(input_data, dict):
-                text = json.dumps(input_data)
+                route = "json_agent"
+            elif "@" in str(input_data) and ("Subject:" in str(input_data) or "From:" in str(input_data)):
+                route = "email_agent"
             else:
-                text = str(input_data)
+                route = "text_agent"
             
-            # Tokenize and predict
-            inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
-            with torch.no_grad():
-                outputs = self.model(**inputs)
+            return {
+                "route_to": route,
+                "classification": classification,
+                "confidence": 0.95,
+                "metadata": self._extract_metadata(input_data)
+            }
             
-            # Get predicted class
-            predicted_class = torch.argmax(outputs.logits, dim=1).item()
-            format_type = self.model.config.id2label.get(predicted_class, "Text")
-            
-            # Determine route and intent based on format
-            if format_type == "JSON":
-                return {
-                    "format": "JSON",
-                    "intent": "Data Processing",
-                    "route_to": "json_agent"
-                }
-            elif format_type == "Email":
-                return {
-                    "format": "Email",
-                    "intent": "Communication",
-                    "route_to": "email_agent"
-                }
-            else:
-                return {
-                    "format": "Text",
-                    "intent": "General Processing",
-                    "route_to": "json_agent"
-                }
-                
         except Exception as e:
-            print(f"Classification error: {e}")
-            return self._fallback_classification(input_data)
-    
-    def _fallback_classification(self, input_data) -> Dict[str, str]:
-        """Fallback classification using simple heuristics"""
-        text = str(input_data).lower()
-        
-        # Check for email patterns
-        if any(term in text for term in ['@', 'subject:', 'dear', 'hi ', 'hello', 'regards', 'thanks', 'thank you', 'sincerely']):
             return {
-                "format": "Email",
-                "intent": "Communication",
-                "route_to": "email_agent"
-            }
-            
-        # Check for JSON-like content
-        if isinstance(input_data, dict) or (text.strip().startswith('{') and text.strip().endswith('}')):
-            return {
-                "format": "JSON",
-                "intent": "Data Processing",
-                "route_to": "json_agent"
-            }
-            
-        # Default to text processing
-        return {
-            "format": "Text",
-            "intent": "General Processing",
-            "route_to": "json_agent"
-        } 
+                "route_to": "text_agent",  # Default route
+                "error": str(e),
+                "confidence": 0.0
+            } 

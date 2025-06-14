@@ -1,165 +1,189 @@
+from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.tools import Tool
+from langchain_community.llms import Ollama
+from langchain.memory import ConversationBufferMemory
+from typing import Dict, Any, List
+import os
+from dotenv import load_dotenv
 import re
-import json
 from datetime import datetime
-from typing import Dict, Any
+
+load_dotenv()
 
 class EmailAgent:
-    def __init__(self, hf_token: str):
-        self.hf_token = hf_token
-
-    def process_email(self, email_text: str) -> Dict[str, Any]:
-        """
-        Processes email content to extract key information and generate a response.
+    def __init__(self, hf_token: str = None):
+        self.llm = Ollama(
+            model="llama2",
+            temperature=0.7,
+            base_url="http://localhost:11434"
+        )
         
-        Args:
-            email_text: The email content to process
+        # Define tools for the agent
+        self.tools = [
+            Tool(
+                name="extract_email_metadata",
+                func=self._extract_email_metadata,
+                description="Extracts metadata from email content"
+            ),
+            Tool(
+                name="analyze_email_intent",
+                func=self._analyze_email_intent,
+                description="Analyzes the intent and urgency of the email"
+            ),
+            Tool(
+                name="generate_response",
+                func=self._generate_response,
+                description="Generates an appropriate response to the email"
+            )
+        ]
+        
+        # Create the prompt template
+        self.prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an expert email processing agent. Your task is to:
+            1. Extract and analyze email metadata
+            2. Determine the email's intent and urgency
+            3. Generate appropriate responses
+            4. Suggest follow-up actions
             
-        Returns:
-            Dict containing extracted information and suggested response
+            Be professional, concise, and helpful in your responses."""),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
+        
+        # Initialize memory
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+        
+        # Create the agent
+        self.agent = create_openai_functions_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=self.prompt
+        )
+        
+        # Create the agent executor
+        self.agent_executor = AgentExecutor(
+            agent=self.agent,
+            tools=self.tools,
+            memory=self.memory,
+            verbose=True
+        )
+
+    def _extract_email_metadata(self, content: str) -> Dict[str, Any]:
+        """Extract metadata from email content"""
+        metadata = {
+            "subject": "",
+            "sender": "",
+            "date": datetime.now().isoformat(),
+            "recipients": [],
+            "has_attachments": False
+        }
+        
+        # Extract subject
+        subject_match = re.search(r"Subject:\s*(.*?)(?:\n|$)", content)
+        if subject_match:
+            metadata["subject"] = subject_match.group(1).strip()
+        
+        # Extract sender
+        sender_match = re.search(r"From:\s*(.*?)(?:\n|$)", content)
+        if sender_match:
+            metadata["sender"] = sender_match.group(1).strip()
+        
+        # Extract recipients
+        to_match = re.search(r"To:\s*(.*?)(?:\n|$)", content)
+        if to_match:
+            metadata["recipients"] = [r.strip() for r in to_match.group(1).split(",")]
+        
+        # Check for attachments
+        metadata["has_attachments"] = "attachment" in content.lower() or "attached" in content.lower()
+        
+        return metadata
+
+    def _analyze_email_intent(self, content: str) -> Dict[str, Any]:
+        """Analyze email intent and urgency"""
+        # Use the LLM to analyze intent
+        prompt = f"""Analyze this email and determine:
+        1. Primary intent (e.g., inquiry, request, complaint, meeting)
+        2. Urgency level (low, medium, high)
+        3. Required actions
+        
+        Email content:
+        {content}
+        """
+        
+        response = self.llm.invoke(prompt)
+        
+        return {
+            "intent": response.content,
+            "urgency": "medium",  # Default urgency
+            "required_actions": []
+        }
+
+    def _generate_response(self, content: str, metadata: Dict[str, Any], intent: Dict[str, Any]) -> str:
+        """Generate an appropriate response to the email"""
+        prompt = f"""Generate a professional email response based on:
+        - Original email: {content}
+        - Metadata: {metadata}
+        - Intent analysis: {intent}
+        
+        The response should be:
+        1. Professional and courteous
+        2. Address all points in the original email
+        3. Clear and concise
+        4. Include appropriate next steps if needed
+        """
+        
+        response = self.llm.invoke(prompt)
+        return response.content
+
+    def process_email(self, email_content: str) -> Dict[str, Any]:
+        """
+        Process an email and generate appropriate response
         """
         try:
-            # Extract sender information
-            email_match = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', email_text)
-            sender_email = email_match.group(0) if email_match else "unknown@example.com"
+            # Extract metadata
+            metadata = self._extract_email_metadata(email_content)
             
-            # Extract sender name if available
-            name_match = re.search(r'(?i)(?:from|sender|sent by)[\s:]*([^<\n<]+)', email_text)
-            sender_name = name_match.group(1).strip() if name_match else ""
+            # Analyze intent
+            intent_analysis = self._analyze_email_intent(email_content)
             
-            # Extract subject if available
-            subject_match = re.search(r'(?i)subject:[\s]*(.*?)(?:\n|$)', email_text)
-            subject = subject_match.group(1).strip() if subject_match else "No Subject"
+            # Generate response
+            response = self._generate_response(email_content, metadata, intent_analysis)
             
-            # Process email content
-            intent = self._detect_intent(email_text)
-            urgency = self._detect_urgency(email_text)
-            body = self._extract_body(email_text)
-            
-            # Generate response based on intent
-            response = self._generate_response(intent, sender_name, subject)
-            
-            return {
-                "metadata": {
-                    "sender_email": sender_email,
-                    "sender_name": sender_name,
-                    "subject": subject,
-                    "intent": intent,
-                    "urgency": urgency,
-                    "received_at": datetime.now().isoformat()
-                },
-                "content": {
-                    "body": body,
-                    "response": response,
-                    "suggested_actions": self._get_suggested_actions(intent)
-                }
+            # Prepare the final result
+            result = {
+                "metadata": metadata,
+                "intent_analysis": intent_analysis,
+                "response": response,
+                "suggested_actions": self._get_suggested_actions(intent_analysis)
             }
+            
+            return result
             
         except Exception as e:
             return {
-                "error": f"Error processing email: {str(e)}",
-                "metadata": {
-                    "sender_email": "",
-                    "sender_name": "",
-                    "subject": "Error Processing Email",
-                    "intent": "Error",
-                    "urgency": "High",
-                    "received_at": datetime.now().isoformat()
-                },
-                "content": {
-                    "body": email_text[:500] + ("..." if len(email_text) > 500 else ""),
-                    "response": "We encountered an error processing your email. Our team has been notified.",
-                    "suggested_actions": ["Review manually"]
-                }
+                "error": str(e),
+                "metadata": self._extract_email_metadata(email_content),
+                "response": "I apologize, but I encountered an error processing this email. Please try again or contact support."
             }
-    
-    def _generate_response(self, intent: str, sender_name: str, subject: str) -> str:
-        """Generate a response template based on the detected intent"""
-        name = sender_name.split(' ')[0] if sender_name else "there"
+
+    def _get_suggested_actions(self, intent_analysis: Dict[str, Any]) -> List[str]:
+        """Generate suggested actions based on intent analysis"""
+        actions = []
         
-        responses = {
-            "Demo Request": (
-                f"Hi {name},\n\n"
-                "Thank you for your interest in our AI solutions! We'd be happy to schedule a demo for you. "
-                "Our team will reach out shortly to find a convenient time.\n\n"
-                "Best regards,\nThe AI Solutions Team"
-            ),
-            "Information Request": (
-                f"Hello {name},\n\n"
-                "Thank you for reaching out! We've attached our latest product brochure and pricing information. "
-                "Please let us know if you have any specific questions.\n\n"
-                "Best regards,\nThe AI Solutions Team"
-            ),
-            "Meeting Request": (
-                f"Hi {name},\n\n"
-                "We'd be happy to schedule a call to discuss {subject or 'this matter'}. "
-                "Please let us know your availability for the next few days.\n\n"
-                "Best regards,\nThe AI Solutions Team"
-            ),
-            "General Inquiry": (
-                f"Hello {name},\n\n"
-                "Thank you for your message. We've received your inquiry and will get back to you "
-                "with more information soon.\n\n"
-                "Best regards,\nThe AI Solutions Team"
-            )
-        }
+        if intent_analysis["urgency"] == "high":
+            actions.append("Schedule immediate follow-up")
         
-        return responses.get(intent, responses["General Inquiry"])
-    
-    def _get_suggested_actions(self, intent: str) -> list:
-        """Get suggested actions based on the email intent"""
-        actions = {
-            "Demo Request": ["Schedule demo", "Send product info", "Assign to sales"],
-            "Information Request": ["Send brochure", "Share pricing", "Schedule call"],
-            "Meeting Request": ["Check calendar", "Propose times", "Assign to team member"],
-            "Support/Complaint": ["Create support ticket", "Escalate to manager", "Request more info"]
-        }
-        return actions.get(intent, ["Review manually"])
-    
-    def _detect_intent(self, text: str) -> str:
-        """Enhanced intent detection based on keywords and patterns"""
-        text = text.lower()
+        if "meeting" in intent_analysis["intent"].lower():
+            actions.append("Check calendar availability")
+            actions.append("Prepare meeting agenda")
         
-        # Check for specific patterns first
-        if any(term in text for term in ['demo', 'demonstration', 'show me', 'show us']):
-            return "Demo Request"
-            
-        if any(term in text for term in ['brochure', 'information', 'details', 'learn more']):
-            return "Information Request"
-            
-        if any(term in text for term in ['invoice', 'payment', 'bill']):
-            return "Invoice/Payment"
-            
-        if any(term in text for term in ['rfq', 'quote', 'pricing', 'how much']):
-            return "Pricing Inquiry"
-            
-        if any(term in text for term in ['complaint', 'issue', 'problem', 'not working']):
-            return "Support/Complaint"
-            
-        if any(term in text for term in ['meeting', 'schedule', 'appointment', 'call', 'discuss']):
-            return "Meeting Request"
-            
-        if any(term in text for term in ['partnership', 'collaborate', 'work together']):
-            return "Partnership Inquiry"
-            
-        if any(term in text for term in ['hi ', 'hello', 'dear', 'good morning', 'good afternoon']):
-            return "General Inquiry"
-            
-        return "General Inquiry"
-    
-    def _detect_urgency(self, text: str) -> str:
-        """Simple urgency detection based on keywords"""
-        text = text.lower()
-        if any(word in text for word in ['urgent', 'asap', 'immediately', 'right away']):
-            return "High"
-        elif any(word in text for word in ['soon', 'prompt', 'quick']):
-            return "Medium"
-        return "Low"
-    
-    def _extract_body(self, text: str) -> str:
-        """Extract the main message body from email text"""
-        # Simple approach: take first 200 chars or first paragraph
-        lines = text.split('\n')
-        for i, line in enumerate(lines):
-            if line.strip() and not line.strip().startswith(('From:', 'To:', 'Subject:', 'Date:')):
-                return '\n'.join(lines[i:i+5])[:500]  # Return first 5 lines or 500 chars
-        return text[:500]  # Fallback to first 500 chars 
+        if "inquiry" in intent_analysis["intent"].lower():
+            actions.append("Gather relevant information")
+            actions.append("Prepare detailed response")
+        
+        return actions 
